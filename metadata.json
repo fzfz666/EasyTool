@@ -1,0 +1,6 @@
+{
+  "name": "JSON Parser & Text Diff Tool",
+  "description": "A high-performance utility combining robust, fault-tolerant JSON formatting with deep, alignment-preserving text comparison in a clean light-themed UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
