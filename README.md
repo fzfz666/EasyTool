@@ -1,20 +1,12 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
 
-# Run and deploy your AI Studio app
+<img width="2229" height="1203" alt="image" src="https://github.com/user-attachments/assets/624cca3f-754d-4e37-accd-4313a8391beb" />
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/6e0f1dbe-920a-4cb9-a1da-bfa36bb2fcf8
-
-## Run Locally
-
-**Prerequisites:**  Node.js
+详情请看图。
+示例网站：tool.mindto.top
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+聚合了本人最常用的四个工具：
+1. 高精度版-对比两个文本差异
+2. json鲁棒解析
+3. tokenizer分词可视化
+4. 去重
