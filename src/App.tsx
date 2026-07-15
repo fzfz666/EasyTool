@@ -122,14 +122,14 @@ export default function App() {
         <Header currentRoute={currentRoute} />
 
         {/* Workspace Canvas */}
-        <main className="flex-1 pl-20 pr-6 py-6 flex flex-col gap-6 max-w-[1500px] w-full mx-auto">
+        <main className="flex-1 pl-[164px] pr-6 py-6 flex flex-col gap-6 max-w-[1500px] w-full mx-auto transition-all duration-300">
           <AnimatePresence mode="wait">
             {renderActiveTab()}
           </AnimatePresence>
         </main>
 
         {/* Global Footer */}
-        <footer className="border-t border-slate-200 bg-white py-5 pl-20 pr-6 mt-auto">
+        <footer className="border-t border-slate-200 bg-white py-5 pl-[164px] pr-6 mt-auto transition-all duration-300">
           <div className="max-w-[1500px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-slate-400 font-mono">

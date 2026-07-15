@@ -63,30 +63,26 @@ export default function Sidebar({ currentRoute, onNavigate }: SidebarProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-50 flex flex-col justify-between transition-all duration-300 ease-in-out shadow-lg shadow-slate-100 ${
-        isHovered ? 'w-64' : 'w-16'
+        isHovered ? 'w-64' : 'w-[140px]'
       }`}
     >
       {/* 顶部 Brand Section */}
       <div className="flex flex-col">
-        <div className="h-16 flex items-center px-4 border-b border-slate-200 gap-3 overflow-hidden">
+        <div className="h-16 flex items-center px-4 border-b border-slate-200 gap-3 overflow-hidden whitespace-nowrap">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-extrabold shrink-0 shadow-md shadow-indigo-100">
             D
           </div>
-          {isHovered && (
-            <div className="flex flex-col transition-opacity duration-200">
-              <span className="text-sm font-black text-slate-800 leading-none">DevDiff Pro</span>
-              <span className="text-[9px] font-bold text-indigo-600 mt-1 uppercase tracking-wider">智能开发者工具箱</span>
-            </div>
-          )}
+          <div className={`flex flex-col transition-opacity duration-200 ${isHovered ? 'opacity-100' : 'opacity-100'}`}>
+            <span className="text-sm font-black text-slate-800 leading-none">DevDiff Pro</span>
+            {isHovered && <span className="text-[9px] font-bold text-indigo-600 mt-1 uppercase tracking-wider">智能开发者工具箱</span>}
+          </div>
         </div>
 
         {/* 菜单列表 */}
-        <nav className="p-3 space-y-1.5">
-          {isHovered && (
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2 select-none">
-              核心工具服务
-            </p>
-          )}
+        <nav className="p-3 space-y-1.5 overflow-hidden">
+          <p className={`text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2 select-none whitespace-nowrap transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            核心工具服务
+          </p>
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentRoute === item.path || (item.path === '/json' && currentRoute === '/');
@@ -95,21 +91,20 @@ export default function Sidebar({ currentRoute, onNavigate }: SidebarProps) {
               <button
                 key={item.path}
                 onClick={() => onNavigate(item.path)}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left border-l-2 border-transparent transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left border-l-2 border-transparent transition-all cursor-pointer whitespace-nowrap ${
                   isActive 
                     ? item.activeColor + ' font-bold shadow-sm' 
                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
+                title={item.title}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                {isHovered ? (
-                  <div className="flex flex-col min-w-0 transition-opacity duration-200">
-                    <span className="text-xs font-bold truncate">{item.title}</span>
-                    <span className="text-[10px] text-slate-400 truncate mt-0.5 font-normal">{item.desc}</span>
-                  </div>
-                ) : (
-                  <span className="sr-only">{item.shortTitle}</span>
-                )}
+                <div className="flex flex-col min-w-0 transition-all duration-200">
+                  <span className={`font-bold transition-all ${isHovered ? 'text-xs' : 'text-[11px]'}`}>
+                    {isHovered ? item.title : item.shortTitle}
+                  </span>
+                  {isHovered && <span className="text-[10px] text-slate-400 mt-0.5 font-normal truncate">{item.desc}</span>}
+                </div>
               </button>
             );
           })}

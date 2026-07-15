@@ -310,13 +310,14 @@ export default function TextDiffTab() {
             {/* Editor Area */}
             <div className="flex-1 relative h-full overflow-hidden bg-white">
               {/* BACKDROP: Renders colored blocks */}
-              <div ref={leftBackdropRef} className="absolute inset-0 pointer-events-none select-none text-slate-800" style={{ ...sharedStyles, overflowY: 'hidden', overflowX: 'hidden' }}>
+              <div ref={leftBackdropRef} className="absolute inset-0 pointer-events-none select-none text-slate-800" style={{ ...sharedStyles, overflowY: 'scroll', overflowX: 'hidden' }}>
                 {leftLinesArray.map((lineText, idx) => {
                   const lineNum = idx + 1;
                   const info = leftLineMap.get(lineNum);
                   const isRemoved = info?.type === 'removed';
+                  const isModified = info?.type === 'modified';
                   return (
-                    <div key={idx} id={`left-line-${lineNum}`} className={`min-h-[24px] rounded-sm ${isRemoved ? 'bg-rose-50' : ''}`}>
+                    <div key={idx} id={`left-line-${lineNum}`} className={`min-h-[24px] rounded-sm ${isRemoved ? 'bg-rose-50' : ''} ${isModified ? 'bg-amber-50/30' : ''}`}>
                       {isRemoved ? (lineText || '\n') : renderLineContent(lineText, info?.charSpans, true)}
                     </div>
                   );
@@ -331,7 +332,7 @@ export default function TextDiffTab() {
                 placeholder="在此输入原始文本..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full resize-none focus:outline-none selection:bg-indigo-200/60"
-                style={{ ...sharedStyles, color: 'transparent', caretColor: '#0f172a', background: 'transparent', overflowY: 'auto' }}
+                style={{ ...sharedStyles, color: 'transparent', caretColor: '#0f172a', background: 'transparent', overflowY: 'scroll' }}
               />
             </div>
           </div>
@@ -348,7 +349,6 @@ export default function TextDiffTab() {
                 stroke={p.type === 'unchanged' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(245, 158, 11, 0.4)'}
                 strokeWidth={p.type === 'unchanged' ? 1 : 1.5}
                 strokeDasharray={p.type === 'modified' ? '4,4' : undefined}
-                className="transition-all duration-300 ease-out"
               />
             ))}
           </svg>
@@ -380,13 +380,14 @@ export default function TextDiffTab() {
             {/* Editor Area */}
             <div className="flex-1 relative h-full overflow-hidden bg-white">
               {/* BACKDROP: Renders colored blocks */}
-              <div ref={rightBackdropRef} className="absolute inset-0 pointer-events-none select-none text-slate-800" style={{ ...sharedStyles, overflowY: 'hidden', overflowX: 'hidden' }}>
+              <div ref={rightBackdropRef} className="absolute inset-0 pointer-events-none select-none text-slate-800" style={{ ...sharedStyles, overflowY: 'scroll', overflowX: 'hidden' }}>
                 {rightLinesArray.map((lineText, idx) => {
                   const lineNum = idx + 1;
                   const info = rightLineMap.get(lineNum);
                   const isAdded = info?.type === 'added';
+                  const isModified = info?.type === 'modified';
                   return (
-                    <div key={idx} id={`right-line-${lineNum}`} className={`min-h-[24px] rounded-sm ${isAdded ? 'bg-emerald-50' : ''}`}>
+                    <div key={idx} id={`right-line-${lineNum}`} className={`min-h-[24px] rounded-sm ${isAdded ? 'bg-emerald-50' : ''} ${isModified ? 'bg-amber-50/30' : ''}`}>
                       {isAdded ? (lineText || '\n') : renderLineContent(lineText, info?.charSpans, false)}
                     </div>
                   );
@@ -401,7 +402,7 @@ export default function TextDiffTab() {
                 placeholder="在此输入修改后的文本..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full resize-none focus:outline-none selection:bg-indigo-200/60"
-                style={{ ...sharedStyles, color: 'transparent', caretColor: '#0f172a', background: 'transparent', overflowY: 'auto' }}
+                style={{ ...sharedStyles, color: 'transparent', caretColor: '#0f172a', background: 'transparent', overflowY: 'scroll' }}
               />
             </div>
           </div>
