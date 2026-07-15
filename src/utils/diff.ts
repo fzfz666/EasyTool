@@ -248,7 +248,7 @@ export function computeTextDiff(
     for (let j = 1; j <= N; j++) {
       const cleanA = cleanLine(oldLines[i - 1], options);
       const cleanB = cleanLine(newLines[j - 1], options);
-      if (cleanA === cleanB) {
+      if (cleanA === cleanB && cleanA !== "") {
         dp[i][j] = dp[i - 1][j - 1] + 1;
       } else {
         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
@@ -267,7 +267,7 @@ export function computeTextDiff(
   const rawOps: LineOp[] = [];
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && cleanLine(oldLines[i - 1], options) === cleanLine(newLines[j - 1], options)) {
+    if (i > 0 && j > 0 && cleanLine(oldLines[i - 1], options) === cleanLine(newLines[j - 1], options) && cleanLine(oldLines[i - 1], options) !== "") {
       rawOps.push({ type: 'match', oldIdx: i - 1, newIdx: j - 1 });
       i--;
       j--;
@@ -386,11 +386,14 @@ export function computeTextDiff(
             const textR = newLines[insOp.newIdx];
             const { leftSpans, rightSpans } = getCharDiff(textL, textR);
 
+            const isMatch = cleanLine(textL, options) === cleanLine(textR, options);
             rows.push({
-              left: { lineNum: delOp.oldIdx + 1, text: textL, type: 'modified', charSpans: leftSpans },
-              right: { lineNum: insOp.newIdx + 1, text: textR, type: 'modified', charSpans: rightSpans },
+              left: { lineNum: delOp.oldIdx + 1, text: textL, type: isMatch ? 'unchanged' : 'modified', charSpans: isMatch ? undefined : leftSpans },
+              right: { lineNum: insOp.newIdx + 1, text: textR, type: isMatch ? 'unchanged' : 'modified', charSpans: isMatch ? undefined : rightSpans },
             });
-            modifications++;
+            if (!isMatch) {
+              modifications++;
+            }
             
             d++;
             s++;
