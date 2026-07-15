@@ -126,7 +126,7 @@ export default function Sidebar({ currentRoute, onNavigate }: SidebarProps) {
               <Zap className="h-4 w-4 text-indigo-500 shrink-0 animate-pulse" />
               <div className="text-[9px] font-bold text-slate-500 leading-tight">
                 <p>极速容错引擎已激活</p>
-                <p className="text-indigo-400 font-normal mt-0.5">当前版本 v2.6.4 Pro</p>
+                <p className="text-indigo-400 font-normal mt-0.5">当前版本 v2.6.5 Pro</p>
               </div>
             </div>
           </div>

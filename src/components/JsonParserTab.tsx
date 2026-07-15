@@ -156,7 +156,22 @@ function JsonTreeNode({ label, value, isLast = true }: TreeNodeProps) {
 }
 
 export default function JsonParserTab() {
-  const [rawText, setRawText] = useState('{\n  "name": "DevStudio Premium",\n  "status": "online",\n  "rating": 4.9,\n  "supportedTypes": [\n    "JSON",\n    "Plain Text",\n    "Markdown"\n  ],\n  "autoDetectEscapes": true,\n  "isAwesome": true\n}');
+  const [rawText, setRawText] = useState(() => {
+    const defaultJson = '{\n  "name": "DevStudio Premium",\n  "status": "online",\n  "rating": 4.9,\n  "supportedTypes": [\n    "JSON",\n    "Plain Text",\n    "Markdown"\n  ],\n  "autoDetectEscapes": true,\n  "isAwesome": true\n}';
+    const countStr = localStorage.getItem('jsonParser_usageCount');
+    let count = countStr ? parseInt(countStr, 10) : 0;
+    const saved = localStorage.getItem('jsonParser_savedText');
+    if (saved !== null) return saved;
+    if (count < 3) {
+      localStorage.setItem('jsonParser_usageCount', (count + 1).toString());
+      return defaultJson;
+    }
+    return '';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('jsonParser_savedText', rawText);
+  }, [rawText]);
   const [parseResult, setParseResult] = useState<ParserResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [showTree, setShowTree] = useState(false);

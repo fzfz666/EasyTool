@@ -92,20 +92,35 @@ export function getCharDiff(
   }
 
   // Prevent browser freeze on giant lines
-  if (textA.length > 800 || textB.length > 800) {
+  if (textA.length > 5000 || textB.length > 5000) {
     return {
       leftSpans: [{ text: textA, type: 'diff' }],
       rightSpans: [{ text: textB, type: 'diff' }],
     };
   }
 
-  const M = textA.length;
-  const N = textB.length;
+  let start = 0;
+  while (start < textA.length && start < textB.length && textA[start] === textB[start]) {
+    start++;
+  }
+
+  let endA = textA.length - 1;
+  let endB = textB.length - 1;
+  while (endA >= start && endB >= start && textA[endA] === textB[endB]) {
+    endA--;
+    endB--;
+  }
+
+  const midA = textA.slice(start, endA + 1);
+  const midB = textB.slice(start, endB + 1);
+
+  const M = midA.length;
+  const N = midB.length;
   const dp: number[][] = Array.from({ length: M + 1 }, () => new Array(N + 1).fill(0));
 
   for (let i = 1; i <= M; i++) {
     for (let j = 1; j <= N; j++) {
-      if (textA[i - 1] === textB[j - 1]) {
+      if (midA[i - 1] === midB[j - 1]) {
         dp[i][j] = dp[i - 1][j - 1] + 1;
       } else {
         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
@@ -121,19 +136,30 @@ export function getCharDiff(
   }
   const ops: CharOp[] = [];
 
+  // Add suffix
+  for (let k = textA.length - 1; k > endA; k--) {
+    ops.push({ type: 'match', char: textA[k] });
+  }
+
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && textA[i - 1] === textB[j - 1]) {
-      ops.push({ type: 'match', char: textA[i - 1] });
+    if (i > 0 && j > 0 && midA[i - 1] === midB[j - 1]) {
+      ops.push({ type: 'match', char: midA[i - 1] });
       i--;
       j--;
     } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      ops.push({ type: 'insert', char: textB[j - 1] });
+      ops.push({ type: 'insert', char: midB[j - 1] });
       j--;
     } else {
-      ops.push({ type: 'delete', char: textA[i - 1] });
+      ops.push({ type: 'delete', char: midA[i - 1] });
       i--;
     }
   }
+
+  // Add prefix
+  for (let k = start - 1; k >= 0; k--) {
+    ops.push({ type: 'match', char: textA[k] });
+  }
+
   ops.reverse();
 
   const leftSpans: { text: string; type: 'normal' | 'diff' }[] = [];
@@ -288,64 +314,74 @@ export function computeTextDiff(
       }
 
       if (consecutiveDeletes.length > 0 && consecutiveInserts.length > 0) {
-        // Find best pairing candidates based on line similarity
-        interface SimilarityCandidate {
-          delIdx: number; // Index in consecutiveDeletes
-          insIdx: number; // Index in consecutiveInserts
-          similarity: number;
+        // Monotonic sequence alignment based on similarity score to prevent crossovers
+        const D = consecutiveDeletes.length;
+        const S = consecutiveInserts.length;
+        const simMatrix: number[][] = Array.from({ length: D }, () => new Array(S).fill(0));
+        
+        for (let d = 0; d < D; d++) {
+          const leftTextLine = oldLines[consecutiveDeletes[d].oldIdx];
+          for (let s = 0; s < S; s++) {
+            const rightTextLine = newLines[consecutiveInserts[s].newIdx];
+            simMatrix[d][s] = getLineSimilarity(leftTextLine, rightTextLine);
+          }
         }
-        const candidates: SimilarityCandidate[] = [];
 
-        for (let d = 0; d < consecutiveDeletes.length; d++) {
-          const dOp = consecutiveDeletes[d];
-          const leftTextLine = oldLines[dOp.oldIdx];
-          for (let s = 0; s < consecutiveInserts.length; s++) {
-            const iOp = consecutiveInserts[s];
-            const rightTextLine = newLines[iOp.newIdx];
-            const sim = getLineSimilarity(leftTextLine, rightTextLine);
-            // Threshold for considering lines "similar"
+        const dpMatch: number[][] = Array.from({ length: D + 1 }, () => new Array(S + 1).fill(0));
+        for (let i = 1; i <= D; i++) {
+          for (let j = 1; j <= S; j++) {
+            const sim = simMatrix[i - 1][j - 1];
+            let best = Math.max(dpMatch[i - 1][j], dpMatch[i][j - 1]);
             if (sim >= 0.25) {
-              candidates.push({ delIdx: d, insIdx: s, similarity: sim });
+              best = Math.max(best, dpMatch[i - 1][j - 1] + sim);
             }
+            dpMatch[i][j] = best;
           }
         }
 
-        // Greedy matching
-        candidates.sort((a, b) => b.similarity - a.similarity);
-        const pairedDeletes = new Set<number>();
-        const pairedInserts = new Set<number>();
-        const bestPairs = new Map<number, number>(); // delIdx -> insIdx
-
-        for (const cand of candidates) {
-          if (!pairedDeletes.has(cand.delIdx) && !pairedInserts.has(cand.insIdx)) {
-            pairedDeletes.add(cand.delIdx);
-            pairedInserts.add(cand.insIdx);
-            bestPairs.set(cand.delIdx, cand.insIdx);
+        // Backtrack to find optimal monotonic pairs
+        let i = D;
+        let j = S;
+        const pairs: { d: number, s: number }[] = [];
+        
+        while (i > 0 && j > 0) {
+          const sim = simMatrix[i - 1][j - 1];
+          // Check if this cell was part of a match
+          if (sim >= 0.25 && Math.abs(dpMatch[i][j] - (dpMatch[i - 1][j - 1] + sim)) < 1e-9) {
+            pairs.push({ d: i - 1, s: j - 1 });
+            i--;
+            j--;
+          } else if (dpMatch[i - 1][j] >= dpMatch[i][j - 1]) {
+            i--;
+          } else {
+            j--;
           }
         }
+        pairs.reverse();
 
-        // Align them preserving relative vertical sequence
+        // Construct rows with preserved vertical sequence
         let d = 0;
         let s = 0;
-        while (d < consecutiveDeletes.length || s < consecutiveInserts.length) {
-          if (d < consecutiveDeletes.length && bestPairs.has(d)) {
-            const pairedInsIdx = bestPairs.get(d)!;
-            // Catch up insert pointer up to pairedInsIdx to keep order
+        let pairIndex = 0;
+
+        while (d < D || s < S) {
+          if (pairIndex < pairs.length && pairs[pairIndex].d === d) {
+            const pairedInsIdx = pairs[pairIndex].s;
+            
+            // Catch up insert pointer to keep order
             while (s < pairedInsIdx) {
-              if (!pairedInserts.has(s)) {
-                const insOp = consecutiveInserts[s];
-                rows.push({
-                  left: { lineNum: null, text: '', type: 'empty' },
-                  right: { lineNum: insOp.newIdx + 1, text: newLines[insOp.newIdx], type: 'added' },
-                });
-                additions++;
-              }
+              const insOp = consecutiveInserts[s];
+              rows.push({
+                left: { lineNum: null, text: '', type: 'empty' },
+                right: { lineNum: insOp.newIdx + 1, text: newLines[insOp.newIdx], type: 'added' },
+              });
+              additions++;
               s++;
             }
 
-            // Pair current delete and insert as a modified line
+            // Emit paired lines as modified
             const delOp = consecutiveDeletes[d];
-            const insOp = consecutiveInserts[pairedInsIdx];
+            const insOp = consecutiveInserts[s]; // s is now pairedInsIdx
             const textL = oldLines[delOp.oldIdx];
             const textR = newLines[insOp.newIdx];
             const { leftSpans, rightSpans } = getCharDiff(textL, textR);
@@ -357,28 +393,25 @@ export function computeTextDiff(
             modifications++;
             
             d++;
-            s = pairedInsIdx + 1; // Move past the paired insert
-          } else if (d < consecutiveDeletes.length) {
+            s++;
+            pairIndex++;
+          } else if (d < D && (pairIndex >= pairs.length || d < pairs[pairIndex].d)) {
             // Unpaired delete
-            if (!pairedDeletes.has(d)) {
-              const delOp = consecutiveDeletes[d];
-              rows.push({
-                left: { lineNum: delOp.oldIdx + 1, text: oldLines[delOp.oldIdx], type: 'removed' },
-                right: { lineNum: null, text: '', type: 'empty' },
-              });
-              deletions++;
-            }
+            const delOp = consecutiveDeletes[d];
+            rows.push({
+              left: { lineNum: delOp.oldIdx + 1, text: oldLines[delOp.oldIdx], type: 'removed' },
+              right: { lineNum: null, text: '', type: 'empty' },
+            });
+            deletions++;
             d++;
           } else {
-            // Leftover unpaired inserts
-            if (s < consecutiveInserts.length && !pairedInserts.has(s)) {
-              const insOp = consecutiveInserts[s];
-              rows.push({
-                left: { lineNum: null, text: '', type: 'empty' },
-                right: { lineNum: insOp.newIdx + 1, text: newLines[insOp.newIdx], type: 'added' },
-              });
-              additions++;
-            }
+            // Unpaired insert (or leftover inserts)
+            const insOp = consecutiveInserts[s];
+            rows.push({
+              left: { lineNum: null, text: '', type: 'empty' },
+              right: { lineNum: insOp.newIdx + 1, text: newLines[insOp.newIdx], type: 'added' },
+            });
+            additions++;
             s++;
           }
         }

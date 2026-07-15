@@ -13,12 +13,36 @@ import {
 import { computeTextDiff, DiffRow, DiffStats, DiffOptions } from '../utils/diff';
 
 export default function TextDiffTab() {
-  const [leftText, setLeftText] = useState(
-    "1. 深度学习是人工智能领域一个极其令人兴奋的分支。\n2. 在本教程中，我们将深入探索最新的神经网络模型。\n3. 注意保持代码和文本空格的排版一致性。\n4. 这是原始文本的一行，其中包含一些旧的陈述句式。\n5. 我们非常喜欢使用 React 与 TypeScript 开发高性能的前端应用！"
-  );
-  const [rightText, setSetRightText] = useState(
-    "1. 深度学习是人工智能（AI）领域中一个非常令人兴奋的、前沿的核心分支。\n2. 在本教程中，我们将深入探索并学习最先进的高阶大语言模型。\n3.   注意保持代码和文本空格的排版一致性。\n4. 这是经过更新的新行，使用了全新的表达方式。\n5. 我们非常喜欢使用 React、TypeScript 以及 Tailwind CSS 极速构建优雅的前端 Web 应用！"
-  );
+  const [leftText, setLeftText] = useState(() => {
+    const defaultText = "1. 深度学习是人工智能领域一个极其令人兴奋的分支。\n2. 在本教程中，我们将深入探索最新的神经网络模型。\n3. 注意保持代码和文本空格的排版一致性。\n4. 这是原始文本的一行，其中包含一些旧的陈述句式。\n5. 我们非常喜欢使用 React 与 TypeScript 开发高性能的前端应用！";
+    const countStr = localStorage.getItem('textDiff_usageCount');
+    let count = countStr ? parseInt(countStr, 10) : 0;
+    const saved = localStorage.getItem('textDiff_leftText');
+    if (saved !== null) return saved;
+    if (count < 3) {
+      localStorage.setItem('textDiff_usageCount', (count + 1).toString());
+      return defaultText;
+    }
+    return '';
+  });
+  
+  const [rightText, setSetRightText] = useState(() => {
+    const defaultText = "1. 深度学习是人工智能（AI）领域中一个非常令人兴奋的、前沿的核心分支。\n2. 在本教程中，我们将深入探索并学习最先进的高阶大语言模型。\n3.   注意保持代码和文本空格的排版一致性。\n4. 这是经过更新的新行，使用了全新的表达方式。\n5. 我们非常喜欢使用 React、TypeScript 以及 Tailwind CSS 极速构建优雅的前端 Web 应用！";
+    const saved = localStorage.getItem('textDiff_rightText');
+    if (saved !== null) return saved;
+    const countStr = localStorage.getItem('textDiff_usageCount');
+    let count = countStr ? parseInt(countStr, 10) : 0; // Usage count was likely bumped by leftText initialization, but let's be safe.
+    if (count <= 3) return defaultText; 
+    return '';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('textDiff_leftText', leftText);
+  }, [leftText]);
+
+  useEffect(() => {
+    localStorage.setItem('textDiff_rightText', rightText);
+  }, [rightText]);
 
   const [options, setOptions] = useState<DiffOptions & { syncScroll: boolean }>({
     ignoreCase: false,
