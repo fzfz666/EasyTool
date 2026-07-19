@@ -455,6 +455,8 @@ export default function JsonParserTab() {
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 onScroll={handleScroll}
+                onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
                 placeholder="请在此粘贴或编写需要解析比对的 JSON 原始数据..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full p-4 font-mono text-xs leading-[22px] resize-none focus:outline-none overflow-y-auto overflow-x-hidden bg-transparent border-0 text-transparent caret-slate-900 selection:bg-indigo-100/70 selection:text-indigo-950"

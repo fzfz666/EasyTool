@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEncoding, TiktokenEncoding } from 'js-tiktoken';
+import { getEncoding, TiktokenEncoding, Tiktoken } from 'js-tiktoken';
 import { 
   FileText, 
   Binary, 
@@ -29,6 +29,15 @@ const PASTEL_COLORS = [
   'bg-teal-100 text-teal-800 border-teal-200 hover:bg-teal-200/60',
 ];
 
+
+const encodingCache: Record<string, Tiktoken> = {};
+function getCachedEncoding(model: ModelType): Tiktoken {
+  if (!encodingCache[model]) {
+    encodingCache[model] = getEncoding(model);
+  }
+  return encodingCache[model];
+}
+
 export default function TokenizerTab() {
   const [inputText, setInputText] = useState(
     "Hello! GPT-4o uses the 'o200k_base' tokenizer, which encodes text more efficiently than older models. 你好！大语言模型会将文本切分为一个个 Token 进行处理，每个 Token 对应一个数值 ID。"
@@ -42,29 +51,32 @@ export default function TokenizerTab() {
   // Initialize and compute tokens
   useEffect(() => {
     try {
-      const enc = getEncoding(encodingModel);
-      const encoded = enc.encode(inputText);
-      setTokens(encoded);
+      const timer = setTimeout(() => {
+        const enc = getCachedEncoding(encodingModel);
+        const encoded = enc.encode(inputText);
+        setTokens(encoded);
 
-      // Map each token to its decoded string representation
-      const slices: TokenInfo[] = [];
-      for (let i = 0; i < encoded.length; i++) {
-        const tokenId = encoded[i];
-        let decodedText = '';
-        try {
-          // Decode single token
-          decodedText = enc.decode([tokenId]);
-        } catch {
-          decodedText = '';
+        // Map each token to its decoded string representation
+        const slices: TokenInfo[] = [];
+        const limit = Math.min(encoded.length, 1000);
+        for (let i = 0; i < limit; i++) {
+          const tokenId = encoded[i];
+          let decodedText = '';
+          try {
+            // Decode single token
+            decodedText = enc.decode([tokenId]);
+          } catch {
+            decodedText = '';
+          }
+          slices.push({
+            id: tokenId,
+            text: decodedText,
+            colorClass: PASTEL_COLORS[i % PASTEL_COLORS.length],
+          });
         }
-
-        slices.push({
-          id: tokenId,
-          text: decodedText,
-          colorClass: PASTEL_COLORS[i % PASTEL_COLORS.length],
-        });
-      }
-      setTokenSlices(slices);
+        setTokenSlices(slices);
+      }, 100);
+      return () => clearTimeout(timer);
     } catch (err) {
       console.error("Tokenization error:", err);
     }
@@ -163,6 +175,8 @@ export default function TokenizerTab() {
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            onKeyUp={(e) => e.stopPropagation()}
             placeholder="请在此输入你想进行 Tokenizer 分词计算的任何文本或代码..."
             className="flex-1 p-5 font-sans text-sm text-slate-700 leading-relaxed resize-none focus:outline-none border-0 bg-transparent placeholder-slate-400"
           />
@@ -211,6 +225,7 @@ export default function TokenizerTab() {
                 className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex flex-wrap gap-x-0.5 gap-y-1 text-sm font-sans select-text break-words content-start overflow-y-auto max-h-[300px]"
                 style={{ wordBreak: 'break-all' }}
               >
+                
                 {tokenSlices.map((slice, idx) => (
                   <span
                     key={idx}
@@ -229,6 +244,11 @@ export default function TokenizerTab() {
                     {slice.text.replace(/\n/g, '↵\n')}
                   </span>
                 ))}
+                {tokens.length > 1000 && (
+                  <span className="inline-block px-2 py-0.5 text-slate-400 text-xs italic opacity-80 self-center">
+                    ... (后续 Token 可视化已省略，点击"复制 IDs"可获取完整结果)
+                  </span>
+                )}
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">

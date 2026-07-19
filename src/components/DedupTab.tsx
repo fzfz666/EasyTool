@@ -275,6 +275,8 @@ export default function DedupTab() {
                   if (leftBackdropRef.current) leftBackdropRef.current.scrollTop = e.currentTarget.scrollTop;
                   if (leftGutterRef.current) leftGutterRef.current.scrollTop = e.currentTarget.scrollTop;
                 }}
+                onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
                 placeholder="在此输入或粘贴需要去除重复行的内容..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full resize-none focus:outline-none selection:bg-indigo-200/60"
@@ -310,6 +312,8 @@ export default function DedupTab() {
                <textarea
                  readOnly
                  value={deduplicatedText}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onKeyUp={(e) => e.stopPropagation()}
                  onScroll={(e) => {
                    if (rightGutterRef.current) rightGutterRef.current.scrollTop = e.currentTarget.scrollTop;
                  }}

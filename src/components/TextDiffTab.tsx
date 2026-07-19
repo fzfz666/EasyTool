@@ -353,6 +353,8 @@ export default function TextDiffTab() {
                 value={leftText}
                 onChange={(e) => setLeftText(e.target.value)}
                 onScroll={handleLeftScroll}
+                onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
                 placeholder="在此输入原始文本..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full resize-none focus:outline-none selection:bg-indigo-200/60"
@@ -423,6 +425,8 @@ export default function TextDiffTab() {
                 value={rightText}
                 onChange={(e) => setSetRightText(e.target.value)}
                 onScroll={handleRightScroll}
+                onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
                 placeholder="在此输入修改后的文本..."
                 spellCheck="false"
                 className="absolute inset-0 w-full h-full resize-none focus:outline-none selection:bg-indigo-200/60"
